@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simulación de Pizzas</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      background: #f7f7f7;
+    }
+
+    h1 {
+      margin-top: 20px;
+      color: #333;
+    }
+
+    #controls {
+      margin: 20px;
+    }
+
+    input, button {
+      padding: 8px 12px;
+      font-size: 16px;
+      margin-left: 8px;
+    }
+
+    canvas {
+      display: block;
+      margin: 20px auto;
+      background: #fff;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+    }
+
+    .label {
+      position: absolute;
+      font-weight: bold;
+      font-size: 16px;
+      color: #222;
+    }
+  </style>
+</head>
+<body>
+  <h1>Simulación de Cortes de Pizza con Algoritmos</h1>
+  <div id="controls">
+    <label for="slices">¿Cuántas rebanadas por pizza?</label>
+    <input type="number" id="slices" value="8" min="1" />
+    <button onclick="drawPizzas()">Dibujar pizzas</button>
+  </div>
+  
+  <canvas id="canvas" width="900" height="350"></canvas>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    const labels = [
+      { text: "Punto-Pendiente", x: 150 },
+      { text: "DDA", x: 450 },
+      { text: "Bresenham", x: 750 }
+    ];
+
+    function drawPizzas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const slices = parseInt(document.getElementById("slices").value);
+
+      labels.forEach((label, index) => {
+        drawPizza(label.x, 180, 100, slices, label.text.toLowerCase());
+        drawLabel(label.text, label.x, 50);
+      });
+    }
+
+    function drawLabel(text, x, y) {
+      ctx.font = "bold 18px sans-serif";
+      ctx.fillStyle = "#333";
+      ctx.textAlign = "center";
+      ctx.fillText(text, x, y);
+    }
+
+    function drawPizza(x, y, r, slices, algorithm) {
+      // Dibujar el círculo
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      for (let i = 0; i < slices; i++) {
+        const angle = (2 * Math.PI / slices) * i;
+        const xEnd = Math.round(x + r * Math.cos(angle));
+        const yEnd = Math.round(y + r * Math.sin(angle));
+
+        switch (algorithm) {
+          case "punto-pendiente":
+            lineaPuntoPendiente(x, y, xEnd, yEnd);
+            break;
+          case "dda":
+            lineaDDA(x, y, xEnd, yEnd);
+            break;
+          case "bresenham":
+            lineaBresenham(x, y, xEnd, yEnd);
+            break;
+        }
+      }
+    }
+
+    function drawPixel(x, y) {
+      ctx.fillStyle = "#d33";
+      ctx.fillRect(x, y, 1, 1);
+    }
+
+    // Algoritmo Punto-Pendiente
+    function lineaPuntoPendiente(x0, y0, x1, y1) {
+      const dx = x1 - x0;
+      const dy = y1 - y0;
+
+      if (Math.abs(dx) > Math.abs(dy)) {
+        const m = dy / dx;
+        const b = y0 - m * x0;
+        const step = dx > 0 ? 1 : -1;
+        for (let x = x0; x !== x1; x += step) {
+          const y = Math.round(m * x + b);
+          drawPixel(x, y);
+        }
+      } else {
+        const mInv = dx / dy;
+        const step = dy > 0 ? 1 : -1;
+        for (let y = y0; y !== y1; y += step) {
+          const x = Math.round(mInv * y + x0 - mInv * y0);
+          drawPixel(x, y);
+        }
+      }
+    }
+
+    // Algoritmo DDA
+    function lineaDDA(x0, y0, x1, y1) {
+      const dx = x1 - x0;
+      const dy = y1 - y0;
+      const steps = Math.max(Math.abs(dx), Math.abs(dy));
+      const xInc = dx / steps;
+      const yInc = dy / steps;
+
+      let x = x0;
+      let y = y0;
+      for (let i = 0; i < steps; i++) {
+        drawPixel(Math.round(x), Math.round(y));
+        x += xInc;
+        y += yInc;
+      }
+    }
+
+    // Algoritmo Bresenham
+    function lineaBresenham(x0, y0, x1, y1) {
+      let dx = Math.abs(x1 - x0);
+      let dy = Math.abs(y1 - y0);
+      let sx = x0 < x1 ? 1 : -1;
+      let sy = y0 < y1 ? 1 : -1;
+      let err = dx - dy;
+
+      while (true) {
+        drawPixel(x0, y0);
+        if (x0 === x1 && y0 === y1) break;
+        const e2 = 2 * err;
+        if (e2 > -dy) {
+          err -= dy;
+          x0 += sx;
+        }
+        if (e2 < dx) {
+          err += dx;
+          y0 += sy;
+        }
+      }
+    }
+  </script>
+</body>
+</html>
